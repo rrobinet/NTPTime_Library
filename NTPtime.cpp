@@ -8,7 +8,15 @@
    - Add 12 or 24 hours option (AM/PM)
    - Adapt the Send Interval delay to be minimum 10 seconds
    - Implement UNIX time to local time conversion rather than actual NTP time 
+   - Improve the printDateTime function 
+   Modified by ROBVAN v1.2 2018-3-5   
+   - Replace the strDateTime.valid boolean with uint8_t allowing to report on NTP host time-out
+     while testing on data.available
+   		strDateTime.valid = 0 - No Data
+   		strDateTime.valid = 1 - Data Available
+   		strDateTime.valid = 2 - Host Time-out   		
 */
+
 
 #include <Arduino.h>
 #include "NTPTime.h"
@@ -70,24 +78,89 @@ NTPtime::NTPtime(String NTPserver) {
 
 void NTPtime::printDateTime(strDateTime _dateTime) {
 	if (_dateTime.valid) {
-		Serial.print(_dateTime.year);
-		Serial.print( "-");
-		Serial.print(_dateTime.month);
-		Serial.print( "-");
-		Serial.print(_dateTime.day);
-		Serial.print( "-");
-		Serial.print(_dateTime.dayofWeek);
-		Serial.print( " ");
-
-		Serial.print(_dateTime.hour);
-		Serial.print( "H ");
-		Serial.print(_dateTime.minute);
-		Serial.print( "M ");
-		Serial.print(_dateTime.second);
-		Serial.print( "S ");
-		Serial.print(_dateTime.amPm);		
-		Serial.println();
-	} else {
+		switch (_dateTime.dayofWeek) 
+      	{
+    	    case (1):
+        	Serial.print ("Sunday");
+        	break;
+        	case (2):
+          	Serial.print ("Monday");
+          	break;
+        	case (3):
+          	Serial.print ("Tuesday");
+          	break;
+        	case (4):
+         	 Serial.print ("Wednesday");
+          	break;
+        	case (5):
+          	Serial.print ("Thursday");
+          	break;
+        	case (6):
+          	Serial.print ("Friday");
+          	break;
+        	case (7):
+          	Serial.print ("Saturday");
+          	break;
+        	default:
+          	Serial.print("Invalid Day");
+        	break;       
+      	}
+      	Serial.print ("-"),
+        Serial.print (_dateTime.day),
+      	Serial.print ("-");
+	  	switch (_dateTime.month) 
+      	{
+        	case (1):
+     	    Serial.print ("January");
+       		break;
+       		case (2):
+          	Serial.print ("February");
+        	break;
+        	case (3):
+          	Serial.print ("Match");
+        	break;
+        	case (4):
+          	Serial.print ("April");
+        	break;
+        	case (5):
+          	Serial.print ("May");
+        	break;
+        	case (6):
+          	Serial.print ("June");
+        	break;
+        	case (7):
+          	Serial.print ("July");
+        	break;
+        	case (8):
+          	Serial.print ("August");
+        	break;
+        	case (9):
+          	Serial.print ("September");
+        	break;
+        	case (10):
+          	Serial.print ("October");
+        	break;
+        	case (11):
+          	Serial.print ("November");
+        	break;
+        	case (12):
+          	Serial.print ("December");
+        	break;
+        	default:
+          	Serial.print("Invalid Month");
+        	break;
+      	}
+        Serial.print ("-"),
+        Serial.print (_dateTime.year);
+        Serial.print (" "),
+      	Serial.print (_dateTime.hour), Serial.print(":"), 
+      	Serial.print (_dateTime.minute), Serial.print("."), 
+      	Serial.print (_dateTime.second), Serial.print (" "), 
+      	Serial.println (_dateTime.amPm);
+      	Serial.println();
+	} 
+	else 
+	{
 #ifdef DEBUG_ON
 		Serial.println("Invalid time !!!");
 		Serial.println("");
@@ -228,8 +301,15 @@ boolean NTPtime::daylightSavingTime(unsigned long _timeStamp, boolean _amPm) {
 
 
 unsigned long NTPtime::adjustTimeZone(unsigned long _timeStamp, float _timeZone, byte _DayLightSaving, boolean _amPm) {
+    if (_DayLightSaving > 2) _DayLightSaving =0; // Incorrect option 
 #ifdef DEBUG_ON
-	Serial.print ("Day Light Saving time is set to "), Serial.println (_DayLightSaving?"TRUE":"FALSE");
+	Serial.print ("Day Light Saving time is set to: "); 
+	if (_DayLightSaving == 0)
+	{
+		Serial.println ("None"); 
+	}
+	else if (_DayLightSaving == 1) Serial.println ("European");
+	else Serial.println ("US");
     Serial.print ("12 hours Display is set to "), Serial.println (_amPm?"TRUE":"FALSE");
 #endif	
 	strDateTime _tempDateTime;
@@ -310,6 +390,7 @@ strDateTime NTPtime::getNTPtime(float _timeZone, byte _DayLightSaving, boolean _
 			if ((millis() - _sentTime) > _recvTimeout) {
 				_sendPhase = true;
 				_sentTime = 0;
+			    _dateTime.valid = 2; // Added to indiacte a NTP host failure
 			}
 		} else {
 #ifdef DEBUG_ON

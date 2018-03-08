@@ -8,6 +8,13 @@
    - Add 12 or 24 hours option (AM/PM)
    - Adapt the Send Interval delay to be minimum 10 seconds
    - Implement UNIX time to local time conversion rather than actual NTP time 
+   - Improve the printDateTime function 
+   Modified by ROBVAN v1.2 2018-3-5   
+   - Replace the strDateTime.valid boolean with uint8_t allowing to report on NTP host time-out
+     while testing on data.available
+   		strDateTime.valid = 0 - No Data
+   		strDateTime.valid = 1 - Data Available
+   		strDateTime.valid = 2 - Host Time-out   		
 */
 
 #ifndef NTPtime_h
@@ -33,15 +40,16 @@
 
 struct strDateTime
 {
-  byte hour;
-  byte minute;
-  byte second;
-  int year;
-  byte month;
-  byte day;
-  byte dayofWeek;
+  uint8_t hour;
+  uint8_t minute;
+  uint8_t second;
+  uint16_t year;
+  uint8_t month;
+  uint8_t day;
+  uint8_t dayofWeek;
   String amPm = "  ";
-  boolean valid;
+  uint8_t valid;
+//  boolean valid;
 };
 
 class NTPtime {
